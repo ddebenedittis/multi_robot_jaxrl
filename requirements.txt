@@ -1,0 +1,13 @@
+brax
+evosax
+distrax
+flashbax
+flax
+gymnax
+jax[cuda12]>=0.2.26
+jaxlib>=0.1.74
+navix
+optax
+numpy
+pygame
+wandb

@@ -1,0 +1,3 @@
+[submodule "purejaxrl"]
+	path = purejaxrl
+	url = git@github.com:luchris429/purejaxrl.git
