@@ -92,6 +92,7 @@ class ClutteredEnv(environment.Environment[EnvState, EnvParams]):
         reward = 0
         reward = jax.lax.cond(out_of_bounds, lambda _: reward - 100, lambda _: reward, None)
         reward = jax.lax.cond(target_reached, lambda _: reward + 1000, lambda _: reward, None)
+        reward = reward - 1
 
         # Update state dict and evaluate termination conditions
         state = EnvState(
