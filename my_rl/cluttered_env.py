@@ -9,7 +9,7 @@ from gymnax.environments import environment
 from gymnax.environments import spaces
 
 N_ACTIONS = 2
-N_OBSERVATIONS = 7
+N_OBSERVATIONS = 9
 N_OBSTACLES = 20
 
 
@@ -30,7 +30,7 @@ class EnvParams(environment.EnvParams):
     min_u: Tuple[float, float] = (-1.0, -1.0)
     max_u: Tuple[float, float] = (1.0, 1.0)
     dt: float = 0.1
-    max_steps_in_episode: int = 256  # v0 had only 200 steps!
+    max_steps_in_episode: int = 256
 
 
 class ClutteredEnv(environment.Environment[EnvState, EnvParams]):
@@ -94,9 +94,9 @@ class ClutteredEnv(environment.Environment[EnvState, EnvParams]):
         min_distance_to_obstacles = jnp.min(distances_to_obstacles)
         
         reward = 0
-        reward = jax.lax.cond(out_of_bounds, lambda _: reward - 100, lambda _: reward, None)
-        reward = jax.lax.cond(target_reached, lambda _: reward + 1000, lambda _: reward, None)
-        reward = jax.lax.cond(min_distance_to_obstacles < 0.5, lambda _: reward - 20, lambda _: reward, None)
+        reward = jax.lax.cond(out_of_bounds, lambda _: reward - 1000, lambda _: reward, None)
+        reward = jax.lax.cond(target_reached, lambda _: reward + 10000, lambda _: reward, None)
+        reward = jax.lax.cond(min_distance_to_obstacles < 0.5, lambda _: reward - 100, lambda _: reward, None)
         reward = reward - 1
 
         # Update state dict and evaluate termination conditions
@@ -157,11 +157,13 @@ class ClutteredEnv(environment.Environment[EnvState, EnvParams]):
         distances_to_obstacles = jnp.sqrt((state.x - state.obs_state[:, 0])**2 + (state.y - state.obs_state[:, 1])**2)
         closest_obstacle_idx = jnp.argmin(distances_to_obstacles)
         closest_obstacle_rel_pos = state.obs_state[closest_obstacle_idx, 0:2] - jnp.array([state.x, state.y])
+        closest_obstacle_vel = state.obs_state[closest_obstacle_idx, 2:4]
         
         return jnp.array([
             state.x, state.y, state.theta,
             state.target_state[0], state.target_state[1],
             closest_obstacle_rel_pos[0], closest_obstacle_rel_pos[1],
+            closest_obstacle_vel[0], closest_obstacle_vel[1],
         ])
 
     def is_terminal(self, state: EnvState, params: EnvParams) -> jnp.ndarray:
@@ -208,6 +210,8 @@ class ClutteredEnv(environment.Environment[EnvState, EnvParams]):
             params.y_lim[0],
             0,
             0,
+            params.min_u[0],
+            params.min_u[0],
         ])
         
         high = jnp.array([
@@ -218,6 +222,8 @@ class ClutteredEnv(environment.Environment[EnvState, EnvParams]):
             params.y_lim[1],
             params.x_lim[1] - params.x_lim[0],
             params.y_lim[1] - params.y_lim[0],
+            params.max_u[0],
+            params.max_u[0],
         ])
         
         return spaces.Box(low, high, (N_OBSERVATIONS,), dtype=jnp.float32)
